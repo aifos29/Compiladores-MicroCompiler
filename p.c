@@ -24,13 +24,14 @@ typedef enum token_types{
 char token_buffer[2000];
 
 /*Descrito por el libro, la idea es guardar el token actual*/
-token current_token=SCANEOF;
+token current_token = SCANEOF;
 
 					
 void clear_buffer(void){
 	//Borra el buffer de token buffer.
 	memset(token_buffer,'\0',strlen(token_buffer));
 }
+
 void buffer_char(int x){
 	//Convierte el entero a caracter y lo agrega al token_buffer
 	if (strlen(token_buffer)==0){
@@ -39,14 +40,12 @@ void buffer_char(int x){
 		strcat(token_buffer,auxiliar);
 	}
 	else{
-	char dato=(char)x;
-	 char auxiliar[]={dato,'\0'};
- 	 strcat(token_buffer,auxiliar);
-	 
+		char dato=(char)x;
+	 	char auxiliar[]={dato,'\0'};
+ 	 	strcat(token_buffer,auxiliar);
 	}
-
-
 } 
+
 void lexical_error(int x){
 	//Funcion sumamente importante. Muestra error.
 	printf("Caracter no encontrado %d\n",x);
@@ -54,25 +53,19 @@ void lexical_error(int x){
 
 token check_reserved(){
 	//Revise el token_buffer y si este es una palabra reservada retorna el token al que pertenece
-
 	if ((strcmp(token_buffer,"READ")==0) || (strcmp(token_buffer,"read")==0)){
 		return READ;}
 	if ((strcmp(token_buffer,"WRITE")==0) || (strcmp(token_buffer,"write")==0)){
 		return WRITE;}
 	if ((strcmp(token_buffer,"BEGIN")==0) || (strcmp(token_buffer,"begin")==0)){
 		return BEGIN;}
-	if ((strcmp(token_buffer,"END")==0) || (strcmp(token_buffer,"END")==0)){
+	if ((strcmp(token_buffer,"END")==0) || (strcmp(token_buffer,"end")==0)){
 		return END;
 	}
 	else{
-	 return ID;
-  }
+	 	return ID;
+  	}
 }
-
-
-	
-
-
 
 token scanner(void)
 {
@@ -90,8 +83,6 @@ token scanner(void)
 				ID::=LETTER | ID LETTER
 							| ID DIGIT
 							| ID UNDERSCORE
-
-
 			*/
 			buffer_char(in_char);
 			for (c= getchar();isalnum(c)||c=='-';c=getchar())
@@ -128,7 +119,7 @@ token scanner(void)
 				ungetc(c,stdin);
 				lexical_error(in_char);
 			}		
-}
+		}
 	
 	else if (in_char=='-'){
 		/*is it --;comment start */
@@ -152,19 +143,21 @@ void syntax_error(token t){
 }
 
 void match(token t){
-//Crea un token auxiliar que llama al scanner.Compara el auxiliar con lo que recibe. Si son iguales, lo almacena en current_token
+	//Crea un token auxiliar que llama al scanner.Compara el auxiliar con lo que recibe. Si son iguales, lo almacena en current_token
     token auxiliar=scanner();
     if (auxiliar==t){
     	current_token=t;
     }
     else{
-    	printf("%s\n","Error de sintaxis");
+    	printf("%s\n","Syntax Error");
     }
 
 }
 
 token next_token(){
-
+	//Returns the next token to be matched
+	token nextToken = scanner();
+	return nextToken;
 }
 
 void id_list(void)
@@ -231,11 +224,7 @@ void expression(void)
 }
 
 
-
-
-
 /*Figure 2.7  Remaining Parsing Procedures for Macro*/
-
 void expr_list(void)
 {
 	/*<expr list> ::= <expression> { , <expression> }*/
@@ -285,7 +274,6 @@ void statement_list(void){
 		<statement list> ::=<statement>
 								{<statement>}
 	*/
-
 	statement();
 	while (1){
 		switch (next_token()){
