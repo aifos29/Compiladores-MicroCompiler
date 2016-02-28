@@ -4,16 +4,7 @@
 #include <string.h>
 #include "auxiliar.h"
 
-/* La jugada Tosty esta así:
-	1. Existen unas funciones llamadas extract() y extract2(). Reciben un parametro que son de estructura.
-	2. Se supone que tiene que sacar la informacion y devolverla para poder imprimirla en el generate
-	3 Confio en el que devuelve add y sub por que manda, se lo está mandando directo
 
-	Su misión soldado, (¿soldada?,usted entiende): Lograr que el extract, extraiga y muestre correctamente la información para que el
-	generate no se caiga y no tire el error preferido de arquitectura de usted: Violación de segmento o segmention fault. 
-
-	Asi que hagale, yo lo agarro mañana por ahi de la una
-*/
 
 FILE *fp;
  	
@@ -49,7 +40,7 @@ typedef enum token_types{
 	PLUSOP,MINUSOP,SCANEOF
 } token;
 
-char token_buffer[2000];
+char token_buffer[200];
 FILE *archivo;
 /*Descrito por el libro, la idea es guardar el token actual*/
 token current_token=SCANEOF;
@@ -269,6 +260,15 @@ expr_rec process_literal(void)
 	(void) sscanf(token_buffer,"%d", & t.val);
 	return t;
 }
+expr_rec process_id(void)
+{
+	expr_rec t;
+	/*Declare ID and built a corresponding semantic record*/
+	check_id(token_buffer);
+	t.kind = IDEXPR;
+	strcpy(t.name, token_buffer);
+	return t;
+}
 
 void primary(expr_rec * x)
 {
@@ -286,7 +286,9 @@ void primary(expr_rec * x)
 		case ID:
 			/*<primary> ::= ID*/
 			match(ID);
-			check_id(token_buffer);
+			expr_rec p;
+			p=process_id();
+			*x=p;
 			break;
 
 		case INTLITERAL:
@@ -324,6 +326,35 @@ void expr_list(void)
 }
 
 
+char * extract2(expr_rec x){
+	if (x.kind==LITERALEXPR){
+		char * valor[MAXIDLEN];
+		sprintf(*valor,"%d",x.val);
+        return * valor;
+	}
+	else{
+		char  * val[MAXIDLEN];
+
+		strcpy(*val,x.name);
+		return * val;
+	}
+
+}
+
+void assign(expr_rec target, expr_rec source)
+{
+	/*Generate code for assigment. */
+	if (source.kind==LITERALEXPR){
+		generate("Store",extract2(source), target.name,"");
+	}
+	else{
+		generate("Store",source.name, target.name,"");
+	}
+
+
+
+}
+
 void statement(void)
 {
 	token tok = next_token();
@@ -333,11 +364,11 @@ void statement(void)
 		case ID:
 			/*<statement> ::= ID := <expression>; */
 			match(ID);
-			check_id(token_buffer);
+			target = process_id();
 			match(ASSIGNOP);
 			expression(& source); 
 			match(SEMICOLON);
-			assign(source,target);
+			assign(target,source);
 			break;
 
 		case READ:
@@ -382,12 +413,19 @@ void statement_list(void){
 }
 
 
+void finish(void)
+{
+	/*Generate code to finish program. */
+	generate("Halt","","","");
+}
+
 
 void program(void){
 	/*<program> ::= BEGIN <statement list> END*/
 	match(BEGIN);
 	statement_list();
 	match(END);
+	finish();
 	finish();
 }
 
@@ -406,11 +444,11 @@ void system_goal(void){
 
 int main(int argc, char const *argv[])
 {
-	//Esta aquí para no tirar error
-	fp = fopen ( "fichero.txt", "r+" );
-	archivo=fopen("prueba.txt","r");
+	printf("%s\n","hola");
+	archivo=fopen("archivo.txt","r");
+	
 	system_goal();
-	fclose(archivo);
+
 	return 0;
 }
 //Código nuevo del translate
@@ -434,38 +472,28 @@ void generate(string dec,string s,string tipo,string espacio){
  	printf("%s ",s);
  	printf("%s ",tipo);
  	printf("%s ",espacio);
+
  
 
 }
 
 
-char extract(op_rec x){
+char * extract(op_rec x){
 	if (x.operator == PLUS){
-		char ret="add";
-		printf("%s\n",ret);
-		return ret;
+		char *ret[MAXIDLEN];
+		*ret ="add";
+		return * ret;
 	}
 	else{
-		char ret="sub";
-		printf("%s\n",ret);
-		return ret;
+		char * ret[MAXIDLEN];
+		*ret="sub";
+		return * ret;
 	}
-    
+
+
 }
 
-char extract2(expr_rec x){
-	if (x.kind==LITERALEXPR){
-		char val = (char)x.val;
-		printf(" %c\n",val);
-          return val;
-	}
-	else{
-		char val = x.name;
-		printf("%c",val);
-		return val;
-	}
-	
-}
+
 
 char *get_temp(void)
 {
@@ -488,13 +516,11 @@ expr_rec gen_infix(expr_rec e1, op_rec op, expr_rec e2)
 	/*Generate code for infix operation.
 		Get result temp and set up semantic record for result*/
 	strcpy(e_rec.name,get_temp());
-	char uno=extract(op);
-	char dos=extract2(e1);
-	char tres=extract2(e2);
 
+	char uno[33];
 
-
-	//generate(extract(op), extract2(e1), extract2(e2), e_rec.name);
+	strcpy(uno,extract2(e2));
+    generate(extract(op), extract2(e1),uno, e_rec.name);
 	return e_rec;
 }
 
@@ -504,7 +530,7 @@ expr_rec gen_infix(expr_rec e1, op_rec op, expr_rec e2)
 
 void check_id(string s)
 {
-	if(!lookup(s)){
+	if(lookup(s)==0){
 		enter(s);
 		generate("Declare",s,"Integer","");
 	}
@@ -518,17 +544,9 @@ void start(void)
 	/*Semantic initializations,none needed. */
 }
 
-void finish(void)
-{
-	/*Generate code to finish program. */
-	generate("Halt","","","");
-}
 
-void assign(expr_rec target, expr_rec source)
-{
-	/*Generate code for assigment. */
-	generate("Store",extract2(source), target.name,"");
-}
+
+
 
 
 
@@ -541,15 +559,7 @@ void read_id(expr_rec in_var)
 	generate("Read",in_var.name,"Integer","");
 }
 
-expr_rec process_id(void)
-{
-	expr_rec t;
-	/*Declare ID and built a corresponding semantic record*/
-	check_id(token_buffer);
-	t.kind = IDEXPR;
-	strcpy(t.name, token_buffer);
-	return t;
-}
+
 
 
 
@@ -571,5 +581,9 @@ void expression(expr_rec *result)
 		primary(& right_operand);
 		left_operand = gen_infix(left_operand, op, right_operand);
 	}
-	*result = left_operand;
+
+	*result= left_operand;
+
+
+
 }
