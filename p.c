@@ -47,11 +47,14 @@ token current_token=SCANEOF;
 token next;
 int flag=0; //0=falso
 int flag_next_token=0;
-					
+	
+
+
 void clear_buffer(void){
 	//Borra el buffer de token buffer.
 	memset(token_buffer,'\0',strlen(token_buffer));
 }
+
 void buffer_char(int x){
 	//Convierte el entero a caracter y lo agrega al token_buffer
 	if (strlen(token_buffer)==0){
@@ -65,9 +68,8 @@ void buffer_char(int x){
  	 strcat(token_buffer,auxiliar);
 	 
 	}
-
-
 } 
+
 void lexical_error(int x){
 	//Funcion sumamente importante. Muestra error.
 	printf("Caracter no encontrado %d\n",x);
@@ -75,7 +77,6 @@ void lexical_error(int x){
 
 token check_reserved(){
 	//Revise el token_buffer y si este es una palabra reservada retorna el token al que pertenece
-
 	if ((strcmp(token_buffer,"READ")==0) || (strcmp(token_buffer,"read")==0)){
 		return READ;}
 	if ((strcmp(token_buffer,"WRITE")==0) || (strcmp(token_buffer,"write")==0)){
@@ -89,10 +90,6 @@ token check_reserved(){
 	 return ID;
   }
 }
-
-
-	
-
 
 
 token scanner(void)
@@ -112,8 +109,6 @@ token scanner(void)
 				ID::=LETTER | ID LETTER
 							| ID DIGIT
 							| ID UNDERSCORE
-
-
 			*/
 			buffer_char(in_char);
 			for (c= fgetc(archivo);isalnum(c)||c=='-';c=fgetc(archivo))
@@ -150,23 +145,23 @@ token scanner(void)
 				//ungetc(c,stdin);
 				lexical_error(in_char);
 			}		
-}
-	
-	else if (in_char=='-'){
-		/*is it --;comment start */
-		c=fgetc(archivo);
-		if (c=='-'){
-			do 
-				in_char=fgetc(archivo);
-			while (in_char!='\n');
-
-		} else{
-			//ungetc(c,stdin);
-			return MINUSOP;
 		}
-		}else 
-			lexical_error(in_char);
-	}
+	
+		else if (in_char=='-'){
+			/*is it --;comment start */
+			c=fgetc(archivo);
+			if (c=='-'){
+				do 
+					in_char=fgetc(archivo);
+				while (in_char!='\n');
+
+			} else{
+				//ungetc(c,stdin);
+				return MINUSOP;
+			}
+			}else 
+				lexical_error(in_char);
+		}
 }
 
 void syntax_error(token t){
@@ -174,36 +169,33 @@ void syntax_error(token t){
 }
 
 void match(token t){
-//Crea un token auxiliar que llama al scanner.Compara el auxiliar con lo que recibe. Si son iguales, lo almacena en current_token
-	
+	//Crea un token auxiliar que llama al scanner.Compara el auxiliar con lo que recibe. 
+	//Si son iguales, lo almacena en current_token
 	if (flag_next_token==0){
-	token auxiliar=scanner();
-    if (auxiliar==t){
-    	current_token=t;
-    	flag_next_token=0;
-    	flag=1; //Cambio la bandera
-    }
-    else{
-    	flag=0;
-    }
-}
-else{
-	if (next==t){
-		current_token=t;
-		flag_next_token=0;
-		flag=1;
+		token auxiliar=scanner();
+	    if (auxiliar==t){
+	    	current_token=t;
+	    	flag_next_token=0;
+	    	flag=1; //Cambio la bandera
+	    }
+	    else{
+	    	flag=0;
+	    }
 	}
 	else{
-		flag=0;
+		if (next==t){
+			current_token=t;
+			flag_next_token=0;
+			flag=1;
+		}
+		else{
+			flag=0;
+		}
 	}
-
-}
-
 }
 
 token next_token(){
-	token aux;
-
+	
 	if (flag==1){
 		flag_next_token=1;
 		flag=0; // No se ha hecho match
@@ -248,7 +240,8 @@ void add_op(op_rec * rec)
 	}
 	else{
 		syntax_error(tok);
-}}
+	}
+}
 
 expr_rec process_literal(void)
 {
@@ -260,6 +253,7 @@ expr_rec process_literal(void)
 	(void) sscanf(token_buffer,"%d", & t.val);
 	return t;
 }
+
 expr_rec process_id(void)
 {
 	expr_rec t;
@@ -305,14 +299,7 @@ void primary(expr_rec * x)
 	}
 }
 
-
-
-
-
-
-
 /*Figure 2.7  Remaining Parsing Procedures for Macro*/
-
 void expr_list(void)
 {
 	/*<expr list> ::= <expression> { , <expression> }*/
@@ -338,7 +325,6 @@ char * extract2(expr_rec x){
 		strcpy(*val,x.name);
 		return * val;
 	}
-
 }
 
 void assign(expr_rec target, expr_rec source)
@@ -350,9 +336,6 @@ void assign(expr_rec target, expr_rec source)
 	else{
 		generate("Store",source.name, target.name,"");
 	}
-
-
-
 }
 
 void statement(void)
@@ -396,7 +379,6 @@ void statement_list(void){
 		<statement list> ::=<statement>
 								{<statement>}
 	*/
-
 	statement();
 	while (1){
 		switch (next_token()){
@@ -407,7 +389,6 @@ void statement_list(void){
 				break;
 			default:
 				return;
-			
 		}
     }
 }
@@ -419,17 +400,14 @@ void finish(void)
 	generate("Halt","","","");
 }
 
-
 void program(void){
 	/*<program> ::= BEGIN <statement list> END*/
 	match(BEGIN);
 	statement_list();
 	match(END);
 	finish();
-	finish();
+	printf("%s\n", "\n");
 }
-
-
 
 void system_goal(void){
 	/*<sytem goal> := <program> SCANEOF */
@@ -438,24 +416,18 @@ void system_goal(void){
 }
 
 
-
-
-
-
 int main(int argc, char const *argv[])
 {
 	printf("%s\n","hola");
-	archivo=fopen("archivo.txt","r");
+	archivo=fopen("prueba.txt","r");
 	
 	system_goal();
 
 	return 0;
 }
+
 //Código nuevo del translate
 /*Figure 2.8 Semantic Records for Micro Grammar Symbols*/
-
-
-
 /**/
 
 /*Is s in the symbol table?*/
@@ -465,34 +437,28 @@ extern int lookup(string s);
 extern void enter(string s);
 	
 
-
+//Se encarga de imprimir todas las declaraciones
 void generate(string dec,string s,string tipo,string espacio){
 	printf("%s\n ","");
 	printf("%s ",dec);
  	printf("%s ",s);
  	printf("%s ",tipo);
  	printf("%s ",espacio);
-
- 
-
 }
 
-
+//Compara el operador recibido con la operacion para enviar el correcto
 char * extract(op_rec x){
 	if (x.operator == PLUS){
 		char *ret[MAXIDLEN];
-		*ret ="add";
+		*ret ="Add";
 		return * ret;
 	}
 	else{
 		char * ret[MAXIDLEN];
-		*ret="sub";
+		*ret="Sub";
 		return * ret;
 	}
-
-
 }
-
 
 
 char *get_temp(void)
@@ -512,21 +478,15 @@ expr_rec gen_infix(expr_rec e1, op_rec op, expr_rec e2)
 	expr_rec e_rec;
 	/*An expr_rec with temp variant set.*/
 	e_rec.kind = TEMPEXPR;
-
 	/*Generate code for infix operation.
 		Get result temp and set up semantic record for result*/
 	strcpy(e_rec.name,get_temp());
-
 	char uno[33];
-
 	strcpy(uno,extract2(e2));
+
     generate(extract(op), extract2(e1),uno, e_rec.name);
 	return e_rec;
 }
-
-
-
-
 
 void check_id(string s)
 {
@@ -536,32 +496,17 @@ void check_id(string s)
 	}
 }
 
-
-
 /*Figure 2.10*/
 void start(void)
 {
 	/*Semantic initializations,none needed. */
 }
 
-
-
-
-
-
-
-
-
-
 void read_id(expr_rec in_var)
 {
 	/*Generate code for read*/
 	generate("Read",in_var.name,"Integer","");
 }
-
-
-
-
 
 void write_expr(expr_rec out_expr)
 {
@@ -571,19 +516,27 @@ void write_expr(expr_rec out_expr)
 /*Figure 2.11 A Parsing Procedure Including Semanntic Processing*/
 void expression(expr_rec *result)
 {
-	expr_rec left_operand, right_operand;
+	expr_rec left_operand, right_operand, constant_folding;
 	op_rec op;
 
 	primary(& left_operand);
 	while(next_token() == PLUSOP || next_token() == MINUSOP)
 	{
+		int valor;
 		add_op(& op);
 		primary(& right_operand);
+		if (left_operand.kind==LITERALEXPR && right_operand.kind==LITERALEXPR){
+			
+			if(op.operator==MINUS){
+				valor = left_operand.val-right_operand.val;
+			}
+			else{
+				valor = left_operand.val+right_operand.val;
+			}
+			left_operand.val = valor;
+		}
 		left_operand = gen_infix(left_operand, op, right_operand);
+
 	}
-
 	*result= left_operand;
-
-
-
 }

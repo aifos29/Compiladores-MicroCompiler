@@ -16,16 +16,12 @@ int lookup(string s){
     	
 		if (strcmp(s,table[i])==0){
 
-    		ret= 1;
+    		return 1;
     	}
     	else{
-    		ret= 0;
+    		return 0;
     	}
     }
-	return ret;
-
-
-
 }
 
 void enter(string s){

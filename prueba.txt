@@ -1,0 +1,1 @@
+begin A := 314 - 312 + 2 ; end SCANEOF
